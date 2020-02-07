@@ -1,0 +1,7 @@
+/*
+
+!.gitignore
+!automations.yaml
+custom_components/*
+!custom_components/
+!custom_components/heating_radiator
