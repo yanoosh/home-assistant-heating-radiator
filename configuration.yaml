@@ -30,7 +30,8 @@ heating_radiator:
       minimum: "00:00:20"
     presence_sensors:
       - input_boolean.test0
-      - entity_id: input_boolean.test1
+      - condition: "state"
+        entity_id: input_boolean.test1
         state: "any"
     switch_on:
       - service: input_boolean.turn_on

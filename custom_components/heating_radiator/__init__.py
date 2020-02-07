@@ -38,7 +38,7 @@ _LOGGER = logging.getLogger(__name__)
 def entity_to_condition(value: Any) -> Union[Dict, Any]:
     if isinstance(value, str):
         return {
-            "platform": "state",
+            "condition": "state",
             "entity_id": value,
             "state": STATE_ON
         }
@@ -62,7 +62,10 @@ PLACE_SCHEMA = vol.Schema({
     },
     vol.Required(CONF_SWITCH_ON): cv.SCRIPT_SCHEMA,
     vol.Required(CONF_SWITCH_OFF): cv.SCRIPT_SCHEMA,
-    vol.Optional(CONF_PRESENCE_SENSORS): vol.All(cv.ensure_list, entity_to_condition, [cv.CONDITION_SCHEMA])
+    vol.Optional(CONF_PRESENCE_SENSORS): vol.All(
+        cv.ensure_list,
+        [vol.Any(vol.All(cv.entity_id, entity_to_condition), cv.CONDITION_SCHEMA)]
+    )
 })
 
 CONFIG_SCHEMA = vol.Schema(
