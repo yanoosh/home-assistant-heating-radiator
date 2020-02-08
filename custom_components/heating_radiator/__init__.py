@@ -14,7 +14,8 @@ from homeassistant.const import (
     CONF_MINIMUM,
     STATE_ON
 )
-from homeassistant.helpers import script
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import script, condition
 from homeassistant.helpers.script import Script
 from homeassistant.core import HomeAssistant
 
@@ -30,7 +31,7 @@ CONF_DURATION = "duration"
 CONF_SENSORS = "sensors"
 CONF_SWITCH_ON = "switch_on"
 CONF_SWITCH_OFF = "switch_off"
-CONF_PRESENCE_SENSORS = "presence_sensors"
+CONF_PRESENCE = "presence"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ PLACE_SCHEMA = vol.Schema({
     },
     vol.Required(CONF_SWITCH_ON): cv.SCRIPT_SCHEMA,
     vol.Required(CONF_SWITCH_OFF): cv.SCRIPT_SCHEMA,
-    vol.Optional(CONF_PRESENCE_SENSORS): vol.All(
+    vol.Optional(CONF_PRESENCE): vol.All(
         cv.ensure_list,
         [vol.Any(vol.All(cv.entity_id, entity_to_condition), cv.CONDITION_SCHEMA)]
     )
@@ -84,8 +85,8 @@ async def async_setup(hass: HomeAssistant, config):
         switch_off_actions = await config_action(
             hass, placeConfig[CONF_SWITCH_OFF], place, CONF_SWITCH_OFF
         )
-        presence_sensors = config_presence_sensors(
-            placeConfig[CONF_PRESENCE_SENSORS]
+        presence_sensors = await config_presence_sensors(
+            hass, placeConfig[CONF_PRESENCE]
         )
         _LOGGER.debug(heating_predicate)
         _LOGGER.debug(work_interval)
@@ -130,21 +131,16 @@ def config_work_interval(config: Dict) -> WorkInterval:
     )
 
 
-def config_presence_sensors(config: Dict):
-    if isinstance(config, list):
-        presence_sensors_config = config
-    else:
-        presence_sensors_config = [config]
-    presence_sensors = []
-    for sensor in presence_sensors_config:
-        if isinstance(sensor, dict):
-            presence_sensors.append(PresenceSensor(
-                sensor[CONF_ENTITY_ID], sensor[CONF_STATE]
-            ))
-        else:
-            presence_sensors.append(PresenceSensor(sensor))
+async def config_presence_sensors(hass: HomeAssistant, if_configs: Dict):
+    checks = []
+    for if_config in if_configs:
+        try:
+            checks.append(await condition.async_from_config(hass, if_config, False))
+        except HomeAssistantError as ex:
+            _LOGGER.warning("Invalid condition: %s", ex)
+            return None
 
-    return presence_sensors
+    return PresenceSensor(hass, checks)
 
 
 async def config_action(hass: HomeAssistant, config: List, place: str, operation: str) -> Action:

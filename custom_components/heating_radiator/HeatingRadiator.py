@@ -14,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class HeatingPredicate:
-    def __init__(self, hass:HomeAssistant, sensors: List[str], take, target: float, deviation: float):
+    def __init__(self, hass: HomeAssistant, sensors: List[str], take, target: float, deviation: float):
         self._hass = hass
         self._sensors = sensors
         self._take = take
@@ -64,16 +64,18 @@ class WorkInterval:
 
 
 class PresenceSensor:
-    def __init__(self, hass: HomeAssistant, entity_id: str, on_state: str = STATE_ON):
+    def __init__(self, hass: HomeAssistant, checks: List):
         self._hass = hass
-        self.entity_id = entity_id
-        self.on_state = on_state
+        if len(checks) > 0:
+            self._check_algorithm = lambda: all(check(self._hass) for check in checks)
+        else:
+            self._check_algorithm = lambda: True
 
     def is_presence(self):
-        return True
+        return self._check_algorithm()
 
     def __repr__(self):
-        return f"PresenceSensor(entity_id = {self.entity_id}, on_state = {self.on_state})"
+        return f"PresenceSensor(_check_algorithm = {self._check_algorithm})"
 
 
 class Action:
@@ -111,7 +113,7 @@ class HeatingRadiator:
             work_interval: WorkInterval,
             switch_on_actions: Action,
             switch_off_actions: Action,
-            presence_sensors=List[PresenceSensor]
+            presence_sensor=PresenceSensor
     ):
         self._hass = hass
         self._name = name
@@ -119,17 +121,20 @@ class HeatingRadiator:
         self._work_interval = work_interval
         self._switch_on_actions = switch_on_actions
         self._switch_off_actions = switch_off_actions
-        self._presence_sensors = presence_sensors
+        self._presence_sensor = presence_sensor
         self._tick = 0
         self._heaterEnabled = False
 
     async def start(self):
-        # async_track_time_change
         async_track_time_change(self._hass, self._worker, second=f"/{self._work_interval.tick_duration}")
         _LOGGER.info(f"Started {self._name}")
         return True
 
     async def _worker(self, now):
+        if self._tick == 0 and not self._presence_sensor.is_presence():
+            _LOGGER.debug(f"{self._name} no presence skip")
+            return
+
         deviation = self._heating_predicate.get_deviation_scale()
         if self._work_interval.should_work(self._tick, -deviation):
             if not self._heaterEnabled:
