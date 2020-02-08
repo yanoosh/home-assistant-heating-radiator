@@ -19,7 +19,11 @@ from homeassistant.helpers import script, condition
 from homeassistant.helpers.script import Script
 from homeassistant.core import HomeAssistant
 
-from .HeatingRadiator import PresenceSensor, HeatingRadiator, Action, HeatingPredicate, WorkInterval
+from .HeatingRadiator import HeatingRadiator
+from .HeatingPredicate import HeatingPredicate
+from .WorkInterval import WorkInterval
+from .PresenceSensor import PresenceSensor
+from .Action import Action
 
 DOMAIN = "heating_radiator"
 CONF_TEMPERATURE = "temperature"
