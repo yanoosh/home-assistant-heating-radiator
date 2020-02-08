@@ -38,11 +38,9 @@ class HeatingRadiator:
         return True
 
     async def _worker(self, now):
-        if self._tick == 0 and not self._presence_sensor.is_presence():
-            _LOGGER.debug(f"{self._name} no presence skip")
-            return
-
-        deviation = self._heating_predicate.get_deviation_scale()
+        deviation = self._heating_predicate.get_deviation_scale(
+            self._presence_sensor.is_presence()
+        )
         if self._work_interval.should_work(self._tick, -deviation):
             if not self._heaterEnabled:
                 self._heaterEnabled = True

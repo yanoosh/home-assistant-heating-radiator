@@ -9,9 +9,8 @@ from statistics import mean
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import (
-    CONF_ENTITY_ID,
-    CONF_STATE,
     CONF_MINIMUM,
+    CONF_MAXIMUM,
     STATE_ON
 )
 from homeassistant.exceptions import HomeAssistantError
@@ -59,11 +58,13 @@ PLACE_SCHEMA = vol.Schema({
         ),
         vol.Optional(CONF_TAKE, default="mean"): vol.All(vol.Lower, vol.Any("min", "max", "mean")),
         vol.Required(CONF_TARGET): vol.Coerce(float),
+        vol.Required(CONF_MINIMUM): vol.Coerce(float),
         vol.Optional(CONF_MAX_DEVIATION, default=2): vol.All(vol.Coerce(float), vol.Range(min=0))
     },
     vol.Optional(CONF_WORK_INTERVAL, default={}): {
         vol.Optional(CONF_DURATION, default="00:05:00"): cv.time_period,
-        vol.Optional(CONF_MINIMUM, default="00:01:00"): cv.time_period
+        vol.Optional(CONF_MINIMUM, default="00:01:00"): cv.time_period,
+        vol.Optional(CONF_MAXIMUM, default=None): cv.time_period
     },
     vol.Required(CONF_SWITCH_ON): cv.SCRIPT_SCHEMA,
     vol.Required(CONF_SWITCH_OFF): cv.SCRIPT_SCHEMA,
@@ -131,7 +132,8 @@ def config_heating_predicate(hass: HomeAssistant, config: Dict) -> HeatingPredic
 def config_work_interval(config: Dict) -> WorkInterval:
     return WorkInterval(
         config[CONF_DURATION],
-        config[CONF_MINIMUM]
+        config[CONF_MINIMUM],
+        config[CONF_MAXIMUM]
     )
 
 
