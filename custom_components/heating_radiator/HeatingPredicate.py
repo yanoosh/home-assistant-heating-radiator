@@ -15,16 +15,20 @@ class HeatingPredicate:
         self._target = target
         self._minimum = minimum
         self._deviation = deviation
+        self.current_temperature = None
+        self.target_temperature = None
 
     def get_deviation_scale(self, presence: bool) -> float:
-        temperature = self._minimum if presence else self._target
+        self.target_temperature = self._minimum if presence else self._target
         results = self._get_sensors_temperature()
         if len(results) > 0:
-            result = round((self._take(results) - temperature) / self._deviation, 2)
+            self.current_temperature = self._take(results)
+            result = round((self.current_temperature - self.target_temperature) / self._deviation, 2)
         else:
             result = 0
         _LOGGER.debug(f"Temperature deviation {result}")
         return result
+
 
     def _get_sensors_temperature(self):
         results = []

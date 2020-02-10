@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Dict
 
 from homeassistant.helpers.entity import Entity
 from homeassistant.core import HomeAssistant
@@ -40,15 +41,23 @@ class HeatingRadiator(Entity):
     def state(self) -> str:
         return "heating" if self._heater_enabled else "idle"
 
+    @property
+    def state_attributes(self) -> Dict[str, Any]:
+        return {
+            "deviation": self.deviation,
+            "current_temperature": self._heating_predicate.current_temperature,
+            "target_temperature": self._heating_predicate.target_temperature,
+        }
+
     async def async_update(self):
         # https://developers.home-assistant.io/docs/en/entity_index.html
         await self._worker()
 
     async def _worker(self):
-        deviation = self._heating_predicate.get_deviation_scale(
+        self.deviation = self._heating_predicate.get_deviation_scale(
             self._presence_sensor.is_presence()
         )
-        if self._work_interval.should_work(self._tick, -deviation):
+        if self._work_interval.should_work(self._tick, -self.deviation):
             if not self._heater_enabled:
                 self._heater_enabled = True
                 await self._switch_on_actions.run()
