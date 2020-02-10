@@ -1,30 +1,28 @@
-"""
-Automation for heating radiator
-"""
+"""heating radiator"""
 import logging
-# import time
-import voluptuous as vol
-from typing import Dict, List, Any, Union
-from statistics import mean
+from typing import Dict, Any, Union
 
 import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import (
     CONF_MINIMUM,
     CONF_MAXIMUM,
     STATE_ON
 )
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import script, condition
-from homeassistant.helpers.script import Script
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.discovery import async_load_platform
 
-from .HeatingRadiator import HeatingRadiator
-from .HeatingPredicate import HeatingPredicate
-from .WorkInterval import WorkInterval
-from .PresenceSensor import PresenceSensor
 from .Action import Action
+from .HeatingPredicate import HeatingPredicate
+from .HeatingRadiator import HeatingRadiator
+from .PresenceSensor import PresenceSensor
+from .WorkInterval import WorkInterval
 
-DOMAIN = "heating_radiator"
+_LOGGER = logging.getLogger(__name__)
+
+DOMAIN = 'heating_radiator'
+
 CONF_TEMPERATURE = "temperature"
 CONF_TAKE = "take"
 CONF_TARGET = "target"
@@ -35,8 +33,6 @@ CONF_SENSORS = "sensors"
 CONF_SWITCH_ON = "switch_on"
 CONF_SWITCH_OFF = "switch_off"
 CONF_PRESENCE = "presence"
-
-_LOGGER = logging.getLogger(__name__)
 
 
 def entity_to_condition(value: Any) -> Union[Dict, Any]:
@@ -78,85 +74,9 @@ CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: cv.schema_with_slug_keys(PLACE_SCHEMA)}, extra=vol.ALLOW_EXTRA,
 )
 
-
-async def async_setup(hass: HomeAssistant, config):
-    for place, placeConfig in config[DOMAIN].items():
-        _LOGGER.debug("Detected place %s", place)
-        heating_predicate = config_heating_predicate(hass, placeConfig[CONF_TEMPERATURE])
-        work_interval = config_work_interval(placeConfig[CONF_WORK_INTERVAL])
-        switch_on_actions = await config_action(
-            hass, placeConfig[CONF_SWITCH_ON], place, CONF_SWITCH_ON
-        )
-        switch_off_actions = await config_action(
-            hass, placeConfig[CONF_SWITCH_OFF], place, CONF_SWITCH_OFF
-        )
-        presence_sensors = await config_presence_sensors(
-            hass, placeConfig[CONF_PRESENCE]
-        )
-        _LOGGER.debug(heating_predicate)
-        _LOGGER.debug(work_interval)
-        _LOGGER.debug(switch_on_actions)
-        _LOGGER.debug(switch_off_actions)
-        _LOGGER.debug(presence_sensors)
-
-        heating_radiator = HeatingRadiator(
-            hass, f"{DOMAIN}.{place}",
-            heating_predicate,
-            work_interval,
-            switch_on_actions,
-            switch_off_actions,
-            presence_sensors
-        )
-        hass.add_job(heating_radiator.start)
+async def async_setup(hass: HomeAssistant, config: Dict):
+    hass.data[DOMAIN] = {}
+    _LOGGER.debug(config[DOMAIN])
+    hass.async_create_task(async_load_platform(hass, SENSOR_DOMAIN, DOMAIN, config[DOMAIN], config))
 
     return True
-
-
-def config_heating_predicate(hass: HomeAssistant, config: Dict) -> HeatingPredicate:
-    if config[CONF_TAKE] == "min":
-        take = min
-    elif config[CONF_TAKE] == "max":
-        take = max
-    else:
-        take = mean
-
-    return HeatingPredicate(
-        hass,
-        config[CONF_SENSORS],
-        take,
-        config[CONF_TARGET],
-        config[CONF_MAX_DEVIATION]
-    )
-
-
-def config_work_interval(config: Dict) -> WorkInterval:
-    return WorkInterval(
-        config[CONF_DURATION],
-        config[CONF_MINIMUM],
-        config[CONF_MAXIMUM]
-    )
-
-
-async def config_presence_sensors(hass: HomeAssistant, if_configs: Dict):
-    checks = []
-    for if_config in if_configs:
-        try:
-            checks.append(await condition.async_from_config(hass, if_config, False))
-        except HomeAssistantError as ex:
-            _LOGGER.warning("Invalid condition: %s", ex)
-            return None
-
-    return PresenceSensor(hass, checks)
-
-
-async def config_action(hass: HomeAssistant, config: List, place: str, operation: str) -> Action:
-    name = f"{DOMAIN}.{place}.{operation}"
-    actions = []
-    for action in config:
-        action = await script.async_validate_action_config(hass, action)
-        actions.append(action)
-
-    return Action(
-        Script(hass, actions, name),
-        name
-    )

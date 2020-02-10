@@ -1,6 +1,6 @@
 import logging
 
-from homeassistant.helpers.event import async_track_time_change
+from homeassistant.helpers.entity import Entity
 from homeassistant.core import HomeAssistant
 
 from .HeatingPredicate import HeatingPredicate
@@ -11,7 +11,7 @@ from .Action import Action
 _LOGGER = logging.getLogger(__name__)
 
 
-class HeatingRadiator:
+class HeatingRadiator(Entity):
     def __init__(
             self,
             hass: HomeAssistant,
@@ -30,30 +30,37 @@ class HeatingRadiator:
         self._switch_off_actions = switch_off_actions
         self._presence_sensor = presence_sensor
         self._tick = 0
-        self._heaterEnabled = False
+        self._heater_enabled = False
 
-    async def start(self):
-        async_track_time_change(self._hass, self._worker, second=f"/{self._work_interval.tick_duration}")
-        _LOGGER.info(f"Started {self._name}")
-        return True
+    @property
+    def name(self) -> str:
+        return self._name
 
-    async def _worker(self, now):
+    @property
+    def state(self) -> str:
+        return "heating" if self._heater_enabled else "idle"
+
+    async def async_update(self):
+        # https://developers.home-assistant.io/docs/en/entity_index.html
+        await self._worker()
+
+    async def _worker(self):
         deviation = self._heating_predicate.get_deviation_scale(
             self._presence_sensor.is_presence()
         )
         if self._work_interval.should_work(self._tick, -deviation):
-            if not self._heaterEnabled:
-                self._heaterEnabled = True
+            if not self._heater_enabled:
+                self._heater_enabled = True
                 await self._switch_on_actions.run()
                 _LOGGER.debug(f"{self._name} enabled")
         else:
-            if self._heaterEnabled:
-                self._heaterEnabled = False
+            if self._heater_enabled:
+                self._heater_enabled = False
                 await self._switch_off_actions.run()
                 _LOGGER.debug(f"{self._name} disabled")
 
         _LOGGER.debug(f"{self._name} tick: {self._tick}")
-        if self._tick != 0 or self._heaterEnabled is True:
+        if self._tick != 0 or self._heater_enabled is True:
             self._tick += 1
             if self._work_interval.should_restart(self._tick):
                 self._tick = 0
