@@ -1,4 +1,7 @@
+import logging
 from datetime import timedelta
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class WorkInterval:
@@ -9,7 +12,7 @@ class WorkInterval:
         if maximum is None:
             self._maximum_work_cycles = self._total_cycles
         else:
-            self._maximum_work_cycles = round(maximum.total_seconds() / self.tick_duration)
+            self._maximum_work_cycles = min(round(maximum.total_seconds() / self.tick_duration), self._total_cycles)
 
     def should_work(self, tick: int, deviation: float):
         if deviation > 0 and tick < self._maximum_work_cycles:

@@ -32,6 +32,7 @@ class HeatingRadiator(Entity):
         self._presence_sensor = presence_sensor
         self._tick = 0
         self._heater_enabled = False
+        self._deviation = 0
 
     @property
     def name(self) -> str:
@@ -44,7 +45,7 @@ class HeatingRadiator(Entity):
     @property
     def state_attributes(self) -> Dict[str, Any]:
         return {
-            "deviation": self.deviation,
+            "deviation": self._deviation,
             "current_temperature": self._heating_predicate.current_temperature,
             "target_temperature": self._heating_predicate.target_temperature,
         }
@@ -54,10 +55,10 @@ class HeatingRadiator(Entity):
         await self._worker()
 
     async def _worker(self):
-        self.deviation = self._heating_predicate.get_deviation_scale(
+        self._deviation = self._heating_predicate.get_deviation_scale(
             self._presence_sensor.is_presence()
         )
-        if self._work_interval.should_work(self._tick, -self.deviation):
+        if self._work_interval.should_work(self._tick, -self._deviation):
             if not self._heater_enabled:
                 self._heater_enabled = True
                 await self._switch_on_actions.run()

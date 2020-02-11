@@ -19,13 +19,13 @@ heating_radiator:
   test_room0:
     temperature:
       sensors: input_number.temp0
-      target: 21.3
+      target: 22.1
       minimum: 20.0
-      max_deviation: 1.3
+      max_deviation: 2
     work_interval:
-      duration: "00:01:00"
-      minimum: "00:00:20"
-      maximum: "00:00:40"
+      duration: "00:05:00"
+      minimum: "00:00:30"
+      maximum: "00:02:00"
     presence:
       - input_boolean.test0
       - condition: "state"
