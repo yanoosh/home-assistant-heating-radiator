@@ -19,7 +19,7 @@ class HeatingPredicate:
         self.target_temperature = None
 
     def get_deviation_scale(self, presence: bool) -> float:
-        self.target_temperature = self._target if presence else self._minimum
+        self.target_temperature = self._target if presence or self._minimum is None else self._minimum
         results = self._get_sensors_temperature()
         if len(results) > 0:
             self.current_temperature = self._take(results)
