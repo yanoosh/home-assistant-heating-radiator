@@ -8,18 +8,17 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class HeatingPredicate:
-    def __init__(self, hass: HomeAssistant, sensors: List[str], take, target: float, minimum: float, deviation: float):
+    def __init__(self, hass: HomeAssistant, sensors: List[str], take, target: float, deviation: float):
         self._hass = hass
         self._sensors = sensors
         self._take = take
         self._target = target
-        self._minimum = minimum
         self._deviation = deviation
         self.current_temperature = None
         self.target_temperature = None
 
-    def get_deviation_scale(self, presence: bool) -> float:
-        self.target_temperature = self._target if presence or self._minimum is None else self._minimum
+    def get_deviation_scale(self, change: float = 0) -> float:
+        self.target_temperature = self._target + change
         results = self._get_sensors_temperature()
         if len(results) > 0:
             self.current_temperature = self._take(results)
@@ -46,5 +45,4 @@ class HeatingPredicate:
                f"_sensors = {self._sensors}, " \
                f"_take = {self._take}, " \
                f"_target = {self._target}, " \
-               f"_minimum = {self._minimum}, " \
                f"_deviation = {self._deviation})"

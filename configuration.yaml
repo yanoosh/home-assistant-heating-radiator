@@ -19,18 +19,19 @@ heating_radiator:
   test_room0:
     temperature:
       sensors: input_number.temp0
-      target: 22.1
-      minimum: 20.0
+      target: 20
       max_deviation: 2
     work_interval:
       duration: "00:05:00"
       minimum: "00:00:30"
       maximum: "00:02:00"
-    presence:
-      - input_boolean.test0
-      - condition: "state"
-        entity_id: input_boolean.test1
-        state: "on"
+    patches:
+      - change: 2
+        condition:
+          - input_boolean.test0
+          - condition: "state"
+            entity_id: input_boolean.test1
+            state: "on"
     switch_on:
       - service: input_boolean.turn_on
         entity_id: input_boolean.device0
@@ -38,16 +39,16 @@ heating_radiator:
       service: input_boolean.turn_off
       entity_id: input_boolean.device0
 
-  test_room1:
-    temperature:
-      sensors: input_number.temp0
-      target: 22.1
-    switch_on:
-      - service: input_boolean.turn_on
-        entity_id: input_boolean.device0
-    switch_off:
-      service: input_boolean.turn_off
-      entity_id: input_boolean.device0
+#  test_room1:
+#    temperature:
+#      sensors: input_number.temp0
+#      target: 22.1
+#    switch_on:
+#      - service: input_boolean.turn_on
+#        entity_id: input_boolean.device0
+#    switch_off:
+#      service: input_boolean.turn_off
+#      entity_id: input_boolean.device0
 #  test_room1:
 #    temperature:
 #      sensors:

@@ -5,8 +5,8 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.core import HomeAssistant
 
 from .HeatingPredicate import HeatingPredicate
+from .Patches import Patches
 from .WorkInterval import WorkInterval
-from .PresenceSensor import PresenceSensor
 from .Action import Action
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class HeatingRadiator(Entity):
             work_interval: WorkInterval,
             switch_on_actions: Action,
             switch_off_actions: Action,
-            presence_sensor=PresenceSensor
+            patches: Patches
     ):
         self._hass = hass
         self._name = name
@@ -29,7 +29,7 @@ class HeatingRadiator(Entity):
         self._work_interval = work_interval
         self._switch_on_actions = switch_on_actions
         self._switch_off_actions = switch_off_actions
-        self._presence_sensor = presence_sensor
+        self._patchs = patches
         self._tick = 0
         self._heater_enabled = False
         self._deviation = 0
@@ -48,6 +48,7 @@ class HeatingRadiator(Entity):
             "deviation": self._deviation,
             "current_temperature": self._heating_predicate.current_temperature,
             "target_temperature": self._heating_predicate.target_temperature,
+            "target_temperature_patch": self._target_temperature_patch,
         }
 
     async def async_update(self):
@@ -55,8 +56,9 @@ class HeatingRadiator(Entity):
         await self._worker()
 
     async def _worker(self):
+        self._target_temperature_patch = self._patchs.get_change()
         self._deviation = self._heating_predicate.get_deviation_scale(
-            self._presence_sensor.is_presence()
+            self._target_temperature_patch
         )
         if self._work_interval.should_work(self._tick, -self._deviation):
             if not self._heater_enabled:
