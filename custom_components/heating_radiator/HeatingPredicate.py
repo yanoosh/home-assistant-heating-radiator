@@ -28,7 +28,6 @@ class HeatingPredicate:
         _LOGGER.debug(f"Temperature deviation {result}")
         return result
 
-
     def _get_sensors_temperature(self):
         results = []
         for sensor in self._sensors:

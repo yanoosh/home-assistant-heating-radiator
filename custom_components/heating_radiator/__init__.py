@@ -71,6 +71,7 @@ PLACE_SCHEMA = vol.Schema({
             vol.Required(CONF_CHANGE): vol.Coerce(float),
             vol.Required(CONF_CONDITION): vol.All(
                 cv.ensure_list,
+                vol.Length(min=1),
                 [vol.All(entity_to_condition, cv.CONDITION_SCHEMA)]
             )
         }]

@@ -29,6 +29,8 @@ heating_radiator:
       - change: 2
         condition:
           - input_boolean.test0
+      - change: -10
+        condition:
           - condition: "state"
             entity_id: input_boolean.test1
             state: "on"
@@ -39,16 +41,16 @@ heating_radiator:
       service: input_boolean.turn_off
       entity_id: input_boolean.device0
 
-#  test_room1:
-#    temperature:
-#      sensors: input_number.temp0
-#      target: 22.1
-#    switch_on:
-#      - service: input_boolean.turn_on
-#        entity_id: input_boolean.device0
-#    switch_off:
-#      service: input_boolean.turn_off
-#      entity_id: input_boolean.device0
+  test_room1:
+    temperature:
+      sensors: input_number.temp0
+      target: 22.1
+    switch_on:
+      - service: input_boolean.turn_on
+        entity_id: input_boolean.device0
+    switch_off:
+      service: input_boolean.turn_off
+      entity_id: input_boolean.device0
 #  test_room1:
 #    temperature:
 #      sensors:
