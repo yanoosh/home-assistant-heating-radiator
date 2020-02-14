@@ -25,6 +25,7 @@ heating_radiator:
       duration: "00:05:00"
       minimum: "00:00:30"
       maximum: "00:02:00"
+      warmup: "00:00:20"
     patches:
       - change: 2
         condition:

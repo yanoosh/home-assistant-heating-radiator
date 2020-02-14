@@ -4,7 +4,6 @@ Automation for heating radiator
 import logging
 from datetime import timedelta
 from statistics import mean
-# import time
 from typing import Dict, List
 
 from homeassistant.const import (
@@ -17,7 +16,7 @@ from homeassistant.helpers import script, condition
 from homeassistant.helpers.script import Script
 
 from . import DOMAIN, CONF_TEMPERATURE, CONF_TAKE, CONF_TARGET, CONF_MAX_DEVIATION, CONF_WORK_INTERVAL, CONF_DURATION, \
-    CONF_SENSORS, CONF_SWITCH_ON, CONF_SWITCH_OFF, CONF_CHANGE, CONF_PATCHES
+    CONF_SENSORS, CONF_SWITCH_ON, CONF_SWITCH_OFF, CONF_CHANGE, CONF_PATCHES, CONF_WARMUP
 from .Action import Action
 from .HeatingPredicate import HeatingPredicate
 from .HeatingRadiator import HeatingRadiator
@@ -61,7 +60,10 @@ async def async_setup_platform(hass: HomeAssistant, config, async_add_devices, d
             work_interval,
             switch_on_actions,
             switch_off_actions,
-            patches
+            patches,
+            SCAN_INTERVAL,
+            timedelta(minutes=30),
+            timedelta(minutes=1)
         )
         entities.append(heating_radiator)
 
@@ -90,7 +92,9 @@ def config_work_interval(config: Dict) -> WorkInterval:
     return WorkInterval(
         config[CONF_DURATION],
         config[CONF_MINIMUM],
-        config[CONF_MAXIMUM]
+        config[CONF_MAXIMUM],
+        config[CONF_WARMUP],
+        SCAN_INTERVAL
     )
 
 

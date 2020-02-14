@@ -29,6 +29,7 @@ CONF_SWITCH_ON = "switch_on"
 CONF_SWITCH_OFF = "switch_off"
 CONF_PATCHES = "patches"
 CONF_CHANGE = "change"
+CONF_WARMUP = "warmup"
 
 
 def entity_to_condition(value: Any) -> Union[Dict, Any]:
@@ -62,7 +63,8 @@ PLACE_SCHEMA = vol.Schema({
     vol.Optional(CONF_WORK_INTERVAL, default={}): {
         vol.Optional(CONF_DURATION, default="00:05:00"): cv.time_period,
         vol.Optional(CONF_MINIMUM, default="00:00:10"): cv.time_period,
-        vol.Optional(CONF_MAXIMUM, default=None): vol.Any(cv.time_period, None)
+        vol.Optional(CONF_MAXIMUM, default=None): vol.Any(cv.time_period, None),
+        vol.Optional(CONF_WARMUP, default=None): vol.Any(cv.time_period, None)
     },
     vol.Required(CONF_SWITCH_ON): cv.SCRIPT_SCHEMA,
     vol.Required(CONF_SWITCH_OFF): cv.SCRIPT_SCHEMA,

@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 from typing import Any, Dict
 
 from homeassistant.helpers.entity import Entity
@@ -21,7 +22,10 @@ class HeatingRadiator(Entity):
             work_interval: WorkInterval,
             switch_on_actions: Action,
             switch_off_actions: Action,
-            patches: Patches
+            patches: Patches,
+            tick_period: timedelta,
+            warmup_period: timedelta,
+            confirm_period: timedelta = timedelta(seconds=60),
     ):
         self._hass = hass
         self._name = name
@@ -29,10 +33,13 @@ class HeatingRadiator(Entity):
         self._work_interval = work_interval
         self._switch_on_actions = switch_on_actions
         self._switch_off_actions = switch_off_actions
-        self._patchs = patches
+        self._patches = patches
+        self._cooldown_ticks = round(warmup_period.seconds / tick_period.seconds, 0)
+        self._confirm_period = round(confirm_period.seconds / tick_period.seconds, 0)
         self._tick = 0
         self._heater_enabled = False
         self._deviation = 0
+        self._last_change_tick = 0
 
     @property
     def name(self) -> str:
@@ -49,6 +56,8 @@ class HeatingRadiator(Entity):
             "current_temperature": self._heating_predicate.current_temperature,
             "target_temperature": self._heating_predicate.target_temperature,
             "target_temperature_patch": self._target_temperature_patch,
+            "tick": self._tick,
+            "sleep_tick": self._last_change_tick,
         }
 
     async def async_update(self):
@@ -56,22 +65,25 @@ class HeatingRadiator(Entity):
         await self._worker()
 
     async def _worker(self):
-        self._target_temperature_patch = self._patchs.get_change()
+        self._target_temperature_patch = self._patches.get_change()
         self._deviation = self._heating_predicate.get_deviation_scale(
             self._target_temperature_patch
         )
-        if self._work_interval.should_work(self._tick, -self._deviation):
-            if not self._heater_enabled:
-                self._heater_enabled = True
-                await self._switch_on_actions.run()
-                _LOGGER.debug(f"{self._name} enabled")
-        else:
+        work_state = self._work_interval.should_work(self._tick, -self._deviation, self._last_change_tick > self._cooldown_ticks)
+        if work_state != self._heater_enabled:
+            self._last_change_tick = 0
+            self._heater_enabled = work_state
+            _LOGGER.debug("%s change state to %s", self._name, self._heater_enabled)
+
+        if (self._last_change_tick % self._confirm_period) == 0 or self._last_change_tick == 1:
+            _LOGGER.debug("%s turn %s, last change %s", self._name, self._heater_enabled, self._last_change_tick)
             if self._heater_enabled:
-                self._heater_enabled = False
-                await self._switch_off_actions.run()
-                _LOGGER.debug(f"{self._name} disabled")
+                self._hass.async_create_task(self._switch_on_actions.run())
+            else:
+                self._hass.async_create_task(self._switch_off_actions.run())
 
         _LOGGER.debug(f"{self._name} tick: {self._tick}")
+        self._last_change_tick += 1
         if self._tick != 0 or self._heater_enabled is True:
             self._tick += 1
             if self._work_interval.should_restart(self._tick):
