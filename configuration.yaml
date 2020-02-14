@@ -35,10 +35,10 @@ heating_radiator:
           - condition: "state"
             entity_id: input_boolean.test1
             state: "on"
-    switch_on:
+    turn_on:
       - service: input_boolean.turn_on
         entity_id: input_boolean.device0
-    switch_off:
+    turn_off:
       service: input_boolean.turn_off
       entity_id: input_boolean.device0
 
@@ -46,10 +46,10 @@ heating_radiator:
     temperature:
       sensors: input_number.temp0
       target: 22.1
-    switch_on:
+    turn_on:
       - service: input_boolean.turn_on
         entity_id: input_boolean.device0
-    switch_off:
+    turn_off:
       service: input_boolean.turn_off
       entity_id: input_boolean.device0
 #  test_room1:
@@ -60,12 +60,12 @@ heating_radiator:
 #      target: 20
 #      max_deviation: 3
 #    presence_sensors: input_boolean.test1
-#    switch_on:
+#    turn_on:
 #      - service: input_boolean.turn_on
 #        entity_id: input_boolean.device1
 #      - service: input_boolean.turn_on
 #        entity_id: input_boolean.device2
-#    switch_off:
+#    turn_off:
 #      service: input_boolean.turn_off
 #      entity_id: input_boolean.device1
 #  # test_room2:

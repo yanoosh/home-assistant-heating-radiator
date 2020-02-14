@@ -14,10 +14,10 @@ Configuration allows to set minimum work time which is required to start working
         temperature:
           sensors: sensor.ard_1_temperature_1
           target: 22.5
-        switch_on:
+        turn_on:
           service: switch.turn_on
           entity_id: switch.ard_1_switcher_0
-        switch_off:
+        turn_off:
           service: switch.turn_off
           entity_id: switch.ard_1_switcher_0
 
@@ -34,10 +34,10 @@ Configuration allows to set minimum work time which is required to start working
           minimum: "00:00:10"
           maximum: "00:01:00"
         presence: binary_sensor.occupancy_small_room
-        switch_on:
+        turn_on:
           service: switch.turn_on
           entity_id: switch.ard_1_switcher_0
-        switch_off:
+        turn_off:
           service: switch.turn_off
           entity_id: switch.ard_1_switcher_0
 

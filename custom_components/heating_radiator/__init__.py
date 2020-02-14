@@ -25,8 +25,8 @@ CONF_MAX_DEVIATION = "max_deviation"
 CONF_WORK_INTERVAL = "work_interval"
 CONF_DURATION = "duration"
 CONF_SENSORS = "sensors"
-CONF_SWITCH_ON = "switch_on"
-CONF_SWITCH_OFF = "switch_off"
+CONF_TURN_ON = "turn_on"
+CONF_TURN_OFF = "turn_off"
 CONF_PATCHES = "patches"
 CONF_CHANGE = "change"
 CONF_WARMUP = "warmup"
@@ -66,8 +66,8 @@ PLACE_SCHEMA = vol.Schema({
         vol.Optional(CONF_MAXIMUM, default=None): vol.Any(cv.time_period, None),
         vol.Optional(CONF_WARMUP, default=None): vol.Any(cv.time_period, None)
     },
-    vol.Required(CONF_SWITCH_ON): cv.SCRIPT_SCHEMA,
-    vol.Required(CONF_SWITCH_OFF): cv.SCRIPT_SCHEMA,
+    vol.Required(CONF_TURN_ON): cv.SCRIPT_SCHEMA,
+    vol.Required(CONF_TURN_OFF): cv.SCRIPT_SCHEMA,
     vol.Optional(CONF_PATCHES, default=[]): vol.All(
         cv.ensure_list, [{
             vol.Required(CONF_CHANGE): vol.Coerce(float),
