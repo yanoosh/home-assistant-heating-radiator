@@ -40,6 +40,7 @@ class HeatingRadiator(Entity):
         self._heater_enabled = False
         self._deviation = 0
         self._last_change_tick = 0
+        self._should_warmup = False
 
     @property
     def name(self) -> str:
@@ -58,6 +59,7 @@ class HeatingRadiator(Entity):
             "target_temperature_patch": self._target_temperature_patch,
             "tick": self._tick,
             "sleep_tick": self._last_change_tick,
+            "should_warmup": self._should_warmup,
         }
 
     async def async_update(self):
@@ -69,7 +71,7 @@ class HeatingRadiator(Entity):
         self._deviation = self._heating_predicate.get_deviation_scale(
             self._target_temperature_patch
         )
-        work_state = self._work_interval.should_work(self._tick, -self._deviation, self._last_change_tick > self._cooldown_ticks)
+        work_state = self._work_interval.should_work(self._tick, -self._deviation, self._should_warmup)
         if work_state != self._heater_enabled:
             self._last_change_tick = 0
             self._heater_enabled = work_state
@@ -84,7 +86,8 @@ class HeatingRadiator(Entity):
 
         _LOGGER.debug(f"{self._name} tick: {self._tick}")
         self._last_change_tick += 1
-        if self._tick != 0 or self._heater_enabled is True:
+        if self._tick != 0 or self._heater_enabled:
             self._tick += 1
             if self._work_interval.should_restart(self._tick):
+                self._should_warmup = self._last_change_tick > self._cooldown_ticks
                 self._tick = 0
