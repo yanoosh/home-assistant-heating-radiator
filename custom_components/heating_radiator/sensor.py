@@ -4,20 +4,17 @@ Automation for heating radiator
 import logging
 from datetime import timedelta
 from statistics import mean
-from typing import Dict, List
+from typing import Dict, List, Callable
 
 from homeassistant.const import (
     CONF_MINIMUM,
     CONF_MAXIMUM,
     CONF_CONDITION)
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import script, condition
-from homeassistant.helpers.script import Script
 
 from . import DOMAIN, CONF_TEMPERATURE, CONF_TAKE, CONF_TARGET, CONF_MAX_DEVIATION, CONF_WORK_INTERVAL, CONF_DURATION, \
     CONF_SENSORS, CONF_TURN_ON, CONF_TURN_OFF, CONF_CHANGE, CONF_PATCHES, CONF_WARMUP
-from .Action import Action
+from .HassFacade import HassFacade
 from .HeatingPredicate import HeatingPredicate
 from .HeatingRadiator import HeatingRadiator
 from .Patches import Patch, Patches, PatchesEmpty
@@ -29,23 +26,26 @@ SCAN_INTERVAL = timedelta(seconds=10)
 
 
 async def async_setup_platform(hass: HomeAssistant, config, async_add_devices, discovery_info=None):
+    return await add_heating_radiator_to_hass(HassFacade(hass), async_add_devices, discovery_info)
+
+
+async def add_heating_radiator_to_hass(hass_facade: HassFacade, async_add_devices, discovery_info):
     if not discovery_info:
         return
-
     entities = []
     for place, placeConfig in discovery_info.items():
         _LOGGER.debug("Detected place %s", place)
         _LOGGER.debug("Place config %s", placeConfig)
-        heating_predicate = config_heating_predicate(hass, placeConfig[CONF_TEMPERATURE])
+        heating_predicate = config_heating_predicate(hass_facade, placeConfig[CONF_TEMPERATURE])
         work_interval = config_work_interval(placeConfig[CONF_WORK_INTERVAL])
         turn_on_actions = await config_action(
-            hass, placeConfig[CONF_TURN_ON], place, CONF_TURN_ON
+            hass_facade, placeConfig[CONF_TURN_ON], place, CONF_TURN_ON
         )
         turn_off_actions = await config_action(
-            hass, placeConfig[CONF_TURN_OFF], place, CONF_TURN_OFF
+            hass_facade, placeConfig[CONF_TURN_OFF], place, CONF_TURN_OFF
         )
         patches = await config_patches(
-            hass, placeConfig[CONF_PATCHES]
+            hass_facade, placeConfig[CONF_PATCHES]
         )
         _LOGGER.debug(heating_predicate)
         _LOGGER.debug(work_interval)
@@ -54,7 +54,6 @@ async def async_setup_platform(hass: HomeAssistant, config, async_add_devices, d
         _LOGGER.debug(patches)
 
         heating_radiator = HeatingRadiator(
-            hass,
             f"{DOMAIN}_{place}",
             heating_predicate,
             work_interval,
@@ -66,12 +65,11 @@ async def async_setup_platform(hass: HomeAssistant, config, async_add_devices, d
             timedelta(minutes=1)
         )
         entities.append(heating_radiator)
-
     async_add_devices(entities)
     return True
 
 
-def config_heating_predicate(hass: HomeAssistant, config: Dict) -> HeatingPredicate:
+def config_heating_predicate(hass_facade: HassFacade, config: Dict) -> HeatingPredicate:
     if config[CONF_TAKE] == "min":
         take = min
     elif config[CONF_TAKE] == "max":
@@ -80,7 +78,7 @@ def config_heating_predicate(hass: HomeAssistant, config: Dict) -> HeatingPredic
         take = mean
     _LOGGER.debug(str(config))
     return HeatingPredicate(
-        hass,
+        hass_facade,
         config[CONF_SENSORS],
         take,
         config[CONF_TARGET],
@@ -98,16 +96,11 @@ def config_work_interval(config: Dict) -> WorkInterval:
     )
 
 
-async def config_patches(hass: HomeAssistant, config: Dict) -> Patches:
+async def config_patches(hass_facade: HassFacade, config: Dict) -> Patches:
     patches = []
     for patchConfig in config:
-        try:
-            conditions = []
-            for conditionConfig in patchConfig[CONF_CONDITION]:
-                conditions.append(await condition.async_from_config(hass, conditionConfig, False))
-            patches.append(Patch(hass, patchConfig[CONF_CHANGE], conditions))
-        except HomeAssistantError as ex:
-            _LOGGER.warning("Invalid condition: %s", ex)
+        conditions = await hass_facade.create_condition(patchConfig[CONF_CONDITION])
+        patches.append(Patch(patchConfig[CONF_CHANGE], conditions))
 
     if len(patches) > 0:
         return Patches(patches)
@@ -115,14 +108,6 @@ async def config_patches(hass: HomeAssistant, config: Dict) -> Patches:
         return PatchesEmpty()
 
 
-async def config_action(hass: HomeAssistant, config: List, place: str, operation: str) -> Action:
+async def config_action(hass_facade: HassFacade, config: List, place: str, operation: str) -> Callable:
     name = f"{DOMAIN}.{place}.{operation}"
-    actions = []
-    for action in config:
-        action = await script.async_validate_action_config(hass, action)
-        actions.append(action)
-
-    return Action(
-        Script(hass, actions, name),
-        name
-    )
+    return await hass_facade.create_action(name, config)

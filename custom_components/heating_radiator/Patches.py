@@ -1,16 +1,13 @@
-from typing import List
-
-from homeassistant.core import HomeAssistant
+from typing import List, Callable
 
 
 class Patch:
-    def __init__(self, hass: HomeAssistant, change: float, conditions: List):
-        self._hass = hass
+    def __init__(self, change: float, conditions: Callable):
         self._change = change
         self._conditions = conditions
 
     def get_change(self) -> float:
-        if all(check(self._hass) for check in self._conditions):
+        if self._conditions():
             return self._change
         else:
             return 0

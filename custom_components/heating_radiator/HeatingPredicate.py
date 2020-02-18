@@ -1,15 +1,16 @@
 import logging
-
 from typing import List
 
-from homeassistant.core import HomeAssistant, State
+from homeassistant.core import State
+
+from custom_components.heating_radiator.HassFacade import HassFacade
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class HeatingPredicate:
-    def __init__(self, hass: HomeAssistant, sensors: List[str], take, target: float, deviation: float):
-        self._hass = hass
+    def __init__(self, hass_facade: HassFacade, sensors: List[str], take, target: float, deviation: float):
+        self._hass_facade = hass_facade
         self._sensors = sensors
         self._take = take
         self._target = target
@@ -31,7 +32,7 @@ class HeatingPredicate:
     def _get_sensors_temperature(self):
         results = []
         for sensor in self._sensors:
-            state = self._hass.states.get(sensor)
+            state = self._hass_facade.get_state(sensor)
             if isinstance(state, State):
                 try:
                     results.append(float(state.state))

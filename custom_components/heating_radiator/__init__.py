@@ -9,7 +9,6 @@ from homeassistant.const import (CONF_MINIMUM, CONF_MAXIMUM, STATE_ON, STATE_OFF
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.discovery import async_load_platform
 
-from .Action import Action
 from .HeatingPredicate import HeatingPredicate
 from .HeatingRadiator import HeatingRadiator
 from .WorkInterval import WorkInterval
