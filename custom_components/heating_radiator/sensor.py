@@ -4,7 +4,7 @@ Automation for heating radiator
 import logging
 from datetime import timedelta
 from statistics import mean
-from typing import Dict, List, Callable
+from typing import Dict, List, Callable, Optional
 
 from homeassistant.const import (
     CONF_MINIMUM,
@@ -29,7 +29,7 @@ async def async_setup_platform(hass: HomeAssistant, config, async_add_devices, d
     return await add_heating_radiator_to_hass(HassFacade(hass), async_add_devices, discovery_info)
 
 
-async def add_heating_radiator_to_hass(hass_facade: HassFacade, async_add_devices, discovery_info):
+async def add_heating_radiator_to_hass(hass_facade: HassFacade, async_add_devices, discovery_info: Optional[Dict]):
     if not discovery_info:
         return
     entities = []
