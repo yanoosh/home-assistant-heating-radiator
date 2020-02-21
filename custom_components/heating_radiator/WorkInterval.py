@@ -17,9 +17,11 @@ class WorkInterval:
             self._maximum_work_cycles = min(round(maximum.total_seconds() / self._tick_duration), self._total_cycles)
 
     def should_work(self, tick: int, deviation: float, should_warmup: bool):
-        if deviation > 0 and tick < self._maximum_work_cycles:
-            calculate_cycles = round(self._maximum_work_cycles * deviation) + (self._warmup_cycles if should_warmup else 0)
-            return tick < min(max(calculate_cycles, self._minimum_work_cycles), self._maximum_work_cycles)
+        warmup = (self._warmup_cycles if should_warmup else 0)
+        if deviation > 0 and tick < self._maximum_work_cycles + warmup and tick < self._total_cycles:
+            calculate_cycles = round(self._maximum_work_cycles * deviation)
+            limited = min(max(calculate_cycles, self._minimum_work_cycles), self._maximum_work_cycles)
+            return tick < limited + warmup
         else:
             return False
 

@@ -8,10 +8,22 @@ from .HeatingPredicate import HeatingPredicate
 from .Patches import Patches
 from .WorkInterval import WorkInterval
 
+STATE_HEATING = "heating"
+STATE_PAUSE = "pause"
+STATE_IDLE = "idle"
+
 _LOGGER = logging.getLogger(__name__)
 
 
 class HeatingRadiator(Entity):
+    _state = STATE_IDLE
+    _tick = 0
+    _last_change_tick = 0
+    _heater_enabled = False
+    _deviation = None
+    _target_temperature_patch = None
+    _should_warmup = False
+
     def __init__(
             self,
             name: str,
@@ -32,11 +44,6 @@ class HeatingRadiator(Entity):
         self._patches = patches
         self._cooldown_ticks = round(cooldown_period.seconds / tick_period.seconds, 0)
         self._confirm_period = round(confirm_period.seconds / tick_period.seconds, 0)
-        self._tick = 0
-        self._heater_enabled = False
-        self._deviation = 0
-        self._last_change_tick = 0
-        self._should_warmup = False
 
     @property
     def name(self) -> str:
@@ -44,7 +51,7 @@ class HeatingRadiator(Entity):
 
     @property
     def state(self) -> str:
-        return "heating" if self._heater_enabled else "idle"
+        return self._state
 
     @property
     def state_attributes(self) -> Dict[str, Any]:
@@ -75,8 +82,10 @@ class HeatingRadiator(Entity):
         if (self._last_change_tick % self._confirm_period) == 0 or self._last_change_tick == 1:
             _LOGGER.debug("%s turn %s, last change %s", self._name, self._heater_enabled, self._last_change_tick)
             if self._heater_enabled:
+                self._state = STATE_HEATING
                 self._turn_on_actions()
             else:
+                self._state = STATE_PAUSE
                 self._turn_off_actions()
 
         _LOGGER.debug(f"{self._name} tick: {self._tick}")
@@ -87,4 +96,5 @@ class HeatingRadiator(Entity):
                 self._should_warmup = self._last_change_tick > self._cooldown_ticks
                 self._tick = 0
         else:
+            self._state = STATE_IDLE
             self._should_warmup = self._last_change_tick > self._cooldown_ticks
