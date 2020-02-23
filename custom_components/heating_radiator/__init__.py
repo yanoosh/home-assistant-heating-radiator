@@ -5,7 +5,7 @@ from typing import Dict, Any, Union
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.const import (CONF_MINIMUM, CONF_MAXIMUM, STATE_ON, STATE_OFF, CONF_CONDITION)
+from homeassistant.const import (CONF_DEVICES, CONF_MINIMUM, CONF_MAXIMUM, STATE_ON, STATE_OFF, CONF_CONDITION)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.discovery import async_load_platform
 
@@ -49,7 +49,16 @@ def entity_to_condition(value: Any) -> Union[Dict, Any]:
         return value
 
 
-PLACE_SCHEMA = vol.Schema({
+PATCH_SCHEMA = {
+    vol.Required(CONF_CHANGE): vol.Coerce(float),
+    vol.Required(CONF_CONDITION): vol.All(
+        cv.ensure_list,
+        vol.Length(min=1),
+        [vol.All(entity_to_condition, cv.CONDITION_SCHEMA)]
+    )
+}
+
+DEVICE_SCHEMA = vol.Schema({
     vol.Required(CONF_TEMPERATURE): {
         vol.Required(CONF_SENSORS): vol.All(
             cv.ensure_list,
@@ -67,20 +76,18 @@ PLACE_SCHEMA = vol.Schema({
     },
     vol.Required(CONF_TURN_ON): cv.SCRIPT_SCHEMA,
     vol.Required(CONF_TURN_OFF): cv.SCRIPT_SCHEMA,
-    vol.Optional(CONF_PATCHES, default=[]): vol.All(
-        cv.ensure_list, [{
-            vol.Required(CONF_CHANGE): vol.Coerce(float),
-            vol.Required(CONF_CONDITION): vol.All(
-                cv.ensure_list,
-                vol.Length(min=1),
-                [vol.All(entity_to_condition, cv.CONDITION_SCHEMA)]
-            )
-        }]
+    vol.Optional(CONF_PATCHES, default={}): cv.schema_with_slug_keys(
+        vol.Any(PATCH_SCHEMA, None)
     )
 })
 
 CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: cv.schema_with_slug_keys(PLACE_SCHEMA)}, extra=vol.ALLOW_EXTRA,
+    {
+        DOMAIN: {
+            vol.Optional(CONF_PATCHES, default={}): cv.schema_with_slug_keys(PATCH_SCHEMA),
+            vol.Required(CONF_DEVICES): cv.schema_with_slug_keys(DEVICE_SCHEMA)
+        }
+    }, extra=vol.ALLOW_EXTRA
 )
 
 

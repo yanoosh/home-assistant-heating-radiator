@@ -11,46 +11,56 @@ from custom_components.heating_radiator.test.HassFacadeStub import HassFacadeStu
 class SetupTest(unittest.TestCase):
     devices: Dict[str, HeatingRadiator] = {}
     configuration = {
-        "test_room0": {
-            "temperature": {
-                "sensors": ["input_number.temp0"],
-                "target": 20,
-                "max_deviation": 2,
-                "take": "mean"
-            },
-            "work_interval": {
-                "duration": timedelta(minutes=5),
-                "minimum": timedelta(seconds=30),
-                "maximum": timedelta(minutes=2),
-                "warmup": timedelta(seconds=20),
-            },
-            "turn_on": [
-                {
-                    "service": "input_boolean.turn_on",
-                    "entity_id": "input_boolean.device0"
+        "patches": {
+            "global_0": {
+                "change": -5,
+                "condition": [
+                    {"condition": "state", "entity_id": "input_boolean.test0", "state": "on"}
+                ]
+            }
+        },
+        "devices": {
+            "test_room0": {
+                "temperature": {
+                    "sensors": ["input_number.temp0"],
+                    "target": 20,
+                    "max_deviation": 2,
+                    "take": "mean"
+                },
+                "work_interval": {
+                    "duration": timedelta(minutes=5),
+                    "minimum": timedelta(seconds=30),
+                    "maximum": timedelta(minutes=2),
+                    "warmup": timedelta(seconds=20),
+                },
+                "turn_on": [
+                    {
+                        "service": "input_boolean.turn_on",
+                        "entity_id": "input_boolean.device0"
+                    }
+                ],
+                "turn_off": [
+                    {
+                        "service": "input_boolean.turn_off",
+                        "entity_id": "input_boolean.device0"
+                    }
+                ],
+                "patches": {
+                    "cond_0": {
+                        "change": 2,
+                        "condition": [
+                            {"condition": "state", "entity_id": "input_boolean.test0", "state": "on"}
+                        ]
+                    },
+                    "cond_1": {
+                        "change": -10,
+                        "condition": [
+                            {"condition": "state", "entity_id": "input_boolean.test1", "state": "on"}
+                        ]
+                    },
+                    "global_0": None
                 }
-            ],
-            "turn_off": [
-                {
-                    "service": "input_boolean.turn_off",
-                    "entity_id": "input_boolean.device0"
-                }
-            ],
-            "patches": []
-            # "patches": [
-            #     {
-            #         "change": 2,
-            #         "condition": [
-            #             {"condition": "state", "entity_id": "input_boolean.test0", "state": "on"}
-            #         ]
-            #     },
-            #     {
-            #         "change": -10,
-            #         "condition": [
-            #             {"condition": "state", "entity_id": "input_boolean.test1", "state": "on"}
-            #         ]
-            #     }
-            # ]
+            }
         }
     }
     loop = asyncio.new_event_loop()

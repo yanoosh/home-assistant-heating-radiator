@@ -16,42 +16,51 @@ script: !include scripts.yaml
 scene: !include scenes.yaml
 
 heating_radiator:
-  test_room0:
-    temperature:
-      sensors: input_number.temp0
-      target: 20
-      max_deviation: 2
-    work_interval:
-      duration: "00:05:00"
-      minimum: "00:00:30"
-      maximum: "00:02:00"
-      warmup: "00:00:20"
-    patches:
-      - change: 2
-        condition:
-          - input_boolean.test0
-      - change: -10
-        condition:
-          - condition: "state"
-            entity_id: input_boolean.test1
-            state: "on"
-    turn_on:
-      - service: input_boolean.turn_on
+  patches:
+    global_0:
+      change: 2
+      condition:
+        - input_boolean.test0
+  devices:
+    test_room0:
+      temperature:
+        sensors: input_number.temp0
+        target: 20
+        max_deviation: 2
+      work_interval:
+        duration: "00:05:00"
+        minimum: "00:00:30"
+        maximum: "00:02:00"
+        warmup: "00:00:20"
+      patches:
+        global_0:
+        cond_0:
+          change: 2
+          condition:
+            - input_boolean.test1
+        cond_1:
+          change: -10
+          condition:
+            - condition: "state"
+              entity_id: input_boolean.test2
+              state: "on"
+      turn_on:
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.device0
+      turn_off:
+        service: input_boolean.turn_off
         entity_id: input_boolean.device0
-    turn_off:
-      service: input_boolean.turn_off
-      entity_id: input_boolean.device0
 
-  test_room1:
-    temperature:
-      sensors: input_number.temp0
-      target: 22.1
-    turn_on:
-      - service: input_boolean.turn_on
+    test_room1:
+      temperature:
+        sensors: input_number.temp0
+        target: 22.1
+      turn_on:
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.device0
+      turn_off:
+        service: input_boolean.turn_off
         entity_id: input_boolean.device0
-    turn_off:
-      service: input_boolean.turn_off
-      entity_id: input_boolean.device0
 #  test_room1:
 #    temperature:
 #      sensors:
@@ -59,7 +68,7 @@ heating_radiator:
 #        - input_number.temp2
 #      target: 20
 #      max_deviation: 3
-#    presence_sensors: input_boolean.test1
+#    presence_sensors: input_boolean.test3
 #    turn_on:
 #      - service: input_boolean.turn_on
 #        entity_id: input_boolean.device1

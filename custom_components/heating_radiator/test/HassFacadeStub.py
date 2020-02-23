@@ -9,12 +9,9 @@ from custom_components.heating_radiator.HassFacade import HassFacade
 class HassFacadeStub(HassFacade):
 
     def __init__(self):
-        self.reset()
-
-    def reset(self):
         self.states = {}
         self.actions = {}
-        self.condition = MagicMock()
+        self.condition = {}
 
     def get_state(self, sensor: str) -> Optional[State]:
         return State(sensor, self.states[sensor])
@@ -23,5 +20,7 @@ class HassFacadeStub(HassFacade):
         self.actions[name] = MagicMock()
         return self.actions[name]
 
-    async def create_condition(self, raw_config) -> ():
-        return self.condition
+    async def create_condition(self, name: str, raw_config) -> ():
+        self.condition[name] = MagicMock()
+        self.condition[name].return_value = False
+        return self.condition[name]

@@ -30,10 +30,10 @@ async def async_setup_platform(hass: HomeAssistant, config, async_add_devices, d
 
 
 async def add_heating_radiator_to_hass(hass_facade: HassFacade, async_add_devices, discovery_info: Optional[Dict]):
-    if not discovery_info:
+    if not discovery_info or not discovery_info["devices"]:
         return
     entities = []
-    for place, placeConfig in discovery_info.items():
+    for place, placeConfig in discovery_info["devices"].items():
         _LOGGER.debug("Detected place %s", place)
         _LOGGER.debug("Place config %s", placeConfig)
         heating_predicate = config_heating_predicate(hass_facade, placeConfig[CONF_TEMPERATURE])
@@ -45,7 +45,7 @@ async def add_heating_radiator_to_hass(hass_facade: HassFacade, async_add_device
             hass_facade, placeConfig[CONF_TURN_OFF], place, CONF_TURN_OFF
         )
         patches = await config_patches(
-            hass_facade, placeConfig[CONF_PATCHES]
+            hass_facade, placeConfig[CONF_PATCHES], discovery_info[CONF_PATCHES]
         )
         _LOGGER.debug(heating_predicate)
         _LOGGER.debug(work_interval)
@@ -96,11 +96,17 @@ def config_work_interval(config: Dict) -> WorkInterval:
     )
 
 
-async def config_patches(hass_facade: HassFacade, config: Dict) -> Patches:
+async def config_patches(hass_facade: HassFacade, config: Dict, config_global: Dict) -> Patches:
     patches = []
-    for patchConfig in config:
-        conditions = await hass_facade.create_condition(patchConfig[CONF_CONDITION])
-        patches.append(Patch(patchConfig[CONF_CHANGE], conditions))
+    for name, patch_config in config.items():
+        if not isinstance(patch_config, Dict):
+            if name in config_global:
+                patch_config = config_global[name]
+            else:
+                _LOGGER.warning("Global patch %s does not exist.", name)
+                continue
+        conditions = await hass_facade.create_condition(name, patch_config[CONF_CONDITION])
+        patches.append(Patch(patch_config[CONF_CHANGE], conditions))
 
     if len(patches) > 0:
         return Patches(patches)

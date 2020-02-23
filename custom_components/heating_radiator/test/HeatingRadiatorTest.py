@@ -142,10 +142,22 @@ class HeatingRadiatorTest(SetupTest):
         self.loop.run_until_complete(self.device0.async_update())
         self.assertEqual(self.device0.state, "idle", "20.0")
 
+    def test_patch_from_device(self):
+        self.hassFacade.states["input_number.temp0"] = "20.0"
+        self.hassFacade.condition["cond_0"].return_value = True
+        self.loop.run_until_complete(self.device0.async_update())
+        self.assertEqual(self.device0.state_attributes["target_temperature"], 22)
 
-# max work time
-# min work time
-# min work time on warmup
+        self.hassFacade.condition["cond_1"].return_value = True
+        self.loop.run_until_complete(self.device0.async_update())
+        self.assertEqual(self.device0.state_attributes["target_temperature"], 12)
+
+    def test_patch_from_global(self):
+        self.hassFacade.states["input_number.temp0"] = "20.0"
+        self.hassFacade.condition["global_0"].return_value = True
+        self.loop.run_until_complete(self.device0.async_update())
+        self.assertEqual(self.device0.state_attributes["target_temperature"], 15)
+
 
 if __name__ == '__main__':
     unittest.main()

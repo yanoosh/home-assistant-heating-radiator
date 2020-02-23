@@ -26,7 +26,7 @@ class HassFacade:
         script_runner = Script(self._hass, actions, name)
         return lambda: self._run_script(script_runner)
 
-    async def create_condition(self, raw_config) -> ():
+    async def create_condition(self, name, raw_config) -> ():
         try:
             conditions = []
             for conditionConfig in raw_config:
@@ -34,7 +34,7 @@ class HassFacade:
 
             return lambda: all(check(self._hass) for check in conditions)
         except HomeAssistantError as ex:
-            _LOGGER.warning("Invalid condition: %s", ex)
+            _LOGGER.warning("Invalid condition for %s: %s", name, ex)
 
     def _run_script(self, script_runner: Script):
         self._hass.async_create_task(script_runner.async_run())
