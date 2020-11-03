@@ -116,4 +116,4 @@ async def config_patches(hass_facade: HassFacade, config: Dict, config_global: D
 
 async def config_action(hass_facade: HassFacade, config: List, place: str, operation: str) -> Callable:
     name = f"{DOMAIN}.{place}.{operation}"
-    return await hass_facade.create_action(name, config)
+    return await hass_facade.create_action(DOMAIN, name, config)

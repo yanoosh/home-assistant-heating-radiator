@@ -17,13 +17,13 @@ class HassFacade:
     def get_state(self, sensor: str) -> Optional[State]:
         return self._hass.states.get(sensor)
 
-    async def create_action(self, name: str, raw_config: List) -> ():
+    async def create_action(self, domain:str, name: str, raw_config: List) -> ():
         actions = []
         for action in raw_config:
             action = await script.async_validate_action_config(self._hass, action)
             actions.append(action)
 
-        script_runner = Script(self._hass, actions, name)
+        script_runner = Script(self._hass, actions, name, domain)
         return lambda: self._run_script(script_runner)
 
     async def create_condition(self, name, raw_config) -> ():
