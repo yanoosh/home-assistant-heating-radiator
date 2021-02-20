@@ -55,7 +55,7 @@ Prepare ubuntu
 
 Install venv - virtual environments for project and place for home assistant libs
 
-    python3.7 -m venv venv
+    python3.8 -m venv venv
     source venv/bin/activate.fish
 
 Install home assistant libraries - local installation not need special permission and use `sudo`

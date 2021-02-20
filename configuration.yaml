@@ -7,11 +7,6 @@ default_config:
 #   base_url: example.duckdns.org:8123
 
 heating_radiator:
-  patches:
-    global_0:
-      change: 2
-      condition:
-        - input_boolean.test0
   devices:
     test_room0:
       temperature:

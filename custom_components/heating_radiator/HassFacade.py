@@ -1,7 +1,7 @@
 import logging
 from typing import List, Optional
 
-from homeassistant.core import HomeAssistant, State
+from homeassistant.core import HomeAssistant, State, Context
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import script, condition
 from homeassistant.helpers.script import Script
@@ -17,7 +17,7 @@ class HassFacade:
     def get_state(self, sensor: str) -> Optional[State]:
         return self._hass.states.get(sensor)
 
-    async def create_action(self, domain:str, name: str, raw_config: List) -> ():
+    async def create_action(self, domain: str, name: str, raw_config: List) -> ():
         actions = []
         for action in raw_config:
             action = await script.async_validate_action_config(self._hass, action)
@@ -37,4 +37,6 @@ class HassFacade:
             _LOGGER.warning("Invalid condition for %s: %s", name, ex)
 
     def _run_script(self, script_runner: Script):
-        self._hass.async_create_task(script_runner.async_run())
+        self._hass.async_create_task(
+            script_runner.async_run(context=Context())
+        )
