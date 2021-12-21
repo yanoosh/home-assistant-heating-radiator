@@ -23,6 +23,7 @@ class HeatingRadiator(Entity):
     _deviation = None
     _target_temperature_patch = None
     _should_warmup = False
+    _repeatAction = 2
 
     def __init__(
             self,
@@ -77,16 +78,21 @@ class HeatingRadiator(Entity):
         if work_state != self._heater_enabled:
             self._last_change_tick = 0
             self._heater_enabled = work_state
+            self._repeatAction = 2
             _LOGGER.debug("%s change state to %s", self._name, self._heater_enabled)
 
         if (self._last_change_tick % self._confirm_period) == 0 or self._last_change_tick == 1:
             _LOGGER.debug("%s turn %s, last change %s", self._name, self._heater_enabled, self._last_change_tick)
             if self._heater_enabled:
                 self._state = STATE_HEATING
-                self._turn_on_actions()
+                if (self._repeatAction > 0):
+                    self._turn_on_actions()
+                    self._repeatAction -= 1
             else:
                 self._state = STATE_PAUSE
-                self._turn_off_actions()
+                if (self._repeatAction > 0):
+                    self._turn_off_actions()
+                    self._repeatAction -= 1
 
         _LOGGER.debug(f"{self._name} tick: {self._tick}")
         self._last_change_tick += 1
