@@ -47,6 +47,16 @@ heating_radiator:
       turn_off:
         service: input_boolean.turn_off
         entity_id: input_boolean.device0
+    test_room2:
+      temperature:
+        sensors: sensor.test_sensor_0
+        target: 22.1
+      turn_on:
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.device0
+      turn_off:
+        service: input_boolean.turn_off
+        entity_id: input_boolean.device0
 #  test_room1:
 #    temperature:
 #      sensors:
@@ -100,7 +110,16 @@ input_number:
     min: 0
     max: 35
     step: 0.1
-    
+
+sensor:
+  - platform: template
+    sensors:
+      test_sensor_0:
+        friendly_name: test_sensor_0
+        value_template: "nan"
+        unit_of_measurement: "°C"
+        device_class: "temperature"
+        
 logger:
   default: info
   logs:

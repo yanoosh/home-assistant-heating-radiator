@@ -1,4 +1,6 @@
 import logging
+import math
+
 from typing import List
 
 from homeassistant.core import State
@@ -25,6 +27,7 @@ class HeatingPredicate:
             self.current_temperature = self._take(results)
             result = round((self.current_temperature - self.target_temperature) / self._deviation, 2)
         else:
+            self.current_temperature = None
             result = 0
         _LOGGER.debug(f"Temperature deviation {result}")
         return result
@@ -35,7 +38,9 @@ class HeatingPredicate:
             state = self._hass_facade.get_state(sensor)
             if isinstance(state, State):
                 try:
-                    results.append(float(state.state))
+                    temperature = float(state.state)
+                    if math.isnan(temperature) == False:
+                        results.append(temperature)
                 except ValueError:
                     pass
         return results
