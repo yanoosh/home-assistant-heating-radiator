@@ -30,7 +30,7 @@ class HassFacade:
         try:
             conditions = []
             for conditionConfig in raw_config:
-                conditions.append(await condition.async_from_config(self._hass, conditionConfig, False))
+                conditions.append(await condition.async_from_config(self._hass, conditionConfig))
 
             return lambda: all(check(self._hass) for check in conditions)
         except HomeAssistantError as ex:
